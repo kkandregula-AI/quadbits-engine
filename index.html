@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="theme-color" content="#050810"/>
+<title>QuadBits Engine · Brainovision</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050810;--cyan:#22d3ee;--purple:#a78bfa;
+  --amber:#fbbf24;--green:#34d399;--red:#f87171;
+  --text:#e2e8f0;--muted:#64748b;--dim:#334155;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(34,211,238,.3);border-radius:2px}
+
+@keyframes spin    {to{transform:rotate(360deg)}}
+@keyframes glow    {0%,100%{text-shadow:0 0 12px rgba(34,211,238,.5)}50%{text-shadow:0 0 30px rgba(34,211,238,1),0 0 60px rgba(34,211,238,.3)}}
+@keyframes scan    {from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes pulse   {0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+@keyframes up      {from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bop     {0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* Grid bg */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(34,211,238,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.035) 1px,transparent 1px);
+  background-size:72px 72px;}
+
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:28px 16px 80px}
+
+/* ── API KEY ── */
+.apibar{display:flex;align-items:center;gap:10px;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.22);border-radius:12px;padding:12px 16px;margin-bottom:26px}
+.apibar label{font-family:'Orbitron',monospace;font-size:10px;color:var(--cyan);letter-spacing:2px;white-space:nowrap}
+.apibar input{flex:1;background:transparent;border:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text);min-width:0}
+.apibar input::placeholder{color:var(--dim)}
+#saveBtn{background:rgba(34,211,238,.18);border:1px solid rgba(34,211,238,.35);color:var(--cyan);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1.5px;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:.2s}
+#saveBtn:hover{background:rgba(34,211,238,.3)}
+
+/* ── HEADER ── */
+.hdr{text-align:center;margin-bottom:32px}
+.ring{width:48px;height:48px;border-radius:50%;border:2px solid var(--cyan);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(34,211,238,.45);animation:spin 9s linear infinite;font-size:20px;vertical-align:middle;margin-right:12px}
+.hdr h1{font-family:'Orbitron',monospace;font-size:clamp(22px,5vw,38px);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--cyan),var(--purple),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:glow 3s ease-in-out infinite;display:inline-block;vertical-align:middle}
+.hdr p{font-family:'Orbitron',monospace;font-size:11px;color:var(--muted);letter-spacing:2.5px;margin-top:10px}
+.pills{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pill{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1.5px;padding:4px 12px;border-radius:20px}
+
+/* ── FORM ── */
+.card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:22px;margin-bottom:24px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:540px){.grid2{grid-template-columns:1fr}}
+.lbl{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;display:block;margin-bottom:8px}
+.inp{width:100%;background:rgba(255,255,255,.04);border-radius:9px;color:var(--text);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;border:1px solid rgba(255,255,255,.1);transition:.2s}
+.inp:focus{border-color:rgba(255,255,255,.25)}
+select.inp{cursor:pointer;-webkit-appearance:none}
+select.inp option{background:#0d1117}
+textarea.inp{resize:none;line-height:1.6}
+.btns{display:flex;gap:12px;margin-top:4px}
+#goBtn{flex:1;padding:15px;background:linear-gradient(135deg,rgba(34,211,238,.2),rgba(167,139,250,.2));border:1px solid rgba(34,211,238,.5);border-radius:11px;cursor:pointer;color:var(--text);font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px;transition:.25s;box-shadow:0 0 20px rgba(34,211,238,.12)}
+#goBtn:hover:not([disabled]){box-shadow:0 0 36px rgba(34,211,238,.28)}
+#goBtn[disabled]{opacity:.3;cursor:not-allowed;box-shadow:none;background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07)}
+#rstBtn{display:none;padding:15px 20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:11px;cursor:pointer;color:var(--muted);font-family:'Orbitron',monospace;font-size:11px;letter-spacing:1.5px;transition:.2s}
+#rstBtn:hover{color:var(--red);border-color:rgba(248,113,113,.3)}
+
+/* ── METRICS ── */
+#metrics{display:none;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+@media(max-width:460px){#metrics{grid-template-columns:repeat(2,1fr)}}
+.mc{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:13px 10px;text-align:center}
+.mv{font-family:'Orbitron',monospace;font-size:18px;font-weight:700}
+.ml{font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-top:4px}
+
+/* ── BIT PREVIEW ── */
+#preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.pcard{border-radius:12px;padding:14px}
+.phead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ptask{font-size:11px;color:var(--muted);line-height:1.55}
+
+/* ── BIT CARDS ── */
+#bitgrid{display:none;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:22px}
+@media(max-width:500px){#bitgrid{grid-template-columns:1fr}}
+.bc{border-radius:13px;padding:18px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;min-height:190px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);transition:all .4s}
+.scanbar{position:absolute;top:0;left:0;right:0;height:2px;animation:scan 1.4s linear infinite}
+.bc-top{display:flex;align-items:center;justify-content:space-between}
+.bc-left{display:flex;align-items:center;gap:8px}
+.bc-ico{font-size:21px;transition:filter .4s}
+.bc-lbl{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:2px}
+.bc-role{font-size:12px;color:#94a3b8;margin-top:2px}
+.bc-right{display:flex;align-items:center;gap:6px}
+.bc-dot{width:7px;height:7px;border-radius:50%}
+.bc-dot.pulsing{animation:pulse 1s ease-in-out infinite}
+.bc-st{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px}
+.bc-body{flex:1;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.65;overflow-y:auto;max-height:130px}
+.bc-body pre{white-space:pre-wrap;word-break:break-word;margin:0}
+.bc-tok{font-family:'Orbitron',monospace;font-size:9px;color:var(--dim);letter-spacing:1px;text-align:right}
+.bdots{display:flex;gap:5px;align-items:center}
+.bd{width:5px;height:5px;border-radius:50%}
+
+/* ── SYNTHESIS ── */
+#synth{display:none;border-radius:16px;padding:24px;margin-top:4px}
+.shead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.smeta{display:flex;align-items:center;gap:12px}
+.stitle{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--green);letter-spacing:2px}
+.ssub{font-size:12px;color:var(--muted);margin-top:3px}
+#cpBtn{display:none;padding:9px 18px;border-radius:9px;cursor:pointer;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1.5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#94a3b8;transition:.2s}
+.sbouce{display:flex;gap:6px;align-items:center;padding:20px 0}
+#stext{white-space:pre-wrap;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.85;color:var(--text);border-top:1px solid rgba(52,211,153,.12);padding-top:16px}
+
+/* ── ERROR BOX ── */
+#errbox{display:none;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:14px 18px;margin-bottom:18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red);line-height:1.6}
+
+.footer{text-align:center;margin-top:50px;font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,255,255,.05);letter-spacing:3px}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- API Key -->
+<div class="apibar">
+  <label>API KEY</label>
+  <input type="password" id="apiKey" placeholder="sk-ant-…  stored locally, never transmitted elsewhere"/>
+  <button id="saveBtn" onclick="saveKey()">SAVE</button>
+</div>
+
+<!-- Error box -->
+<div id="errbox"></div>
+
+<!-- Header -->
+<div class="hdr">
+  <div><span class="ring">⬡</span><h1>QUADBITS ENGINE</h1></div>
+  <p>4-PARALLEL-STREAM · GEN AI · CONTENT SYNTHESIS</p>
+  <div class="pills" id="pills"></div>
+</div>
+
+<!-- Form -->
+<div class="card">
+  <div class="grid2">
+    <div>
+      <label class="lbl" style="color:var(--cyan)">CONTENT TYPE</label>
+      <select id="ctype" class="inp" style="border-color:rgba(34,211,238,.3)">
+        <option>Blog Post</option><option>Social Media Post</option>
+        <option>Email Campaign</option><option>Ad Copy</option>
+        <option>Product Description</option><option>Press Release</option>
+        <option>LinkedIn Article</option><option>Landing Page Copy</option>
+      </select>
+    </div>
+    <div>
+      <label class="lbl" style="color:var(--purple)">TARGET AUDIENCE</label>
+      <input id="aud" class="inp" style="border-color:rgba(167,139,250,.3)" placeholder="e.g. SaaS founders, students…"/>
+    </div>
+  </div>
+  <div style="margin-bottom:16px">
+    <label class="lbl" style="color:var(--amber)">TOPIC / BRIEF</label>
+    <textarea id="topic" class="inp" style="border-color:rgba(251,191,36,.3)" rows="3"
+      placeholder="Describe what you want to create. QuadBits dispatches 4 parallel AI streams then synthesizes the result…"></textarea>
+  </div>
+  <div class="btns">
+    <button id="goBtn" onclick="runGen()">▶ DISPATCH QUADBITS</button>
+    <button id="rstBtn" onclick="doReset()">RESET</button>
+  </div>
+</div>
+
+<!-- Metrics -->
+<div id="metrics" style="display:none">
+  <div class="mc"><div class="mv" id="mEl" style="color:var(--cyan)">—</div><div class="ml">ELAPSED</div></div>
+  <div class="mc"><div class="mv" id="mSv" style="color:var(--green)">—</div><div class="ml">TIME SAVED</div></div>
+  <div class="mc"><div class="mv" id="mTk" style="color:var(--amber)">—</div><div class="ml">TOKENS</div></div>
+  <div class="mc"><div class="mv" id="mEf" style="color:var(--purple)">—</div><div class="ml">EFFICIENCY</div></div>
+</div>
+
+<!-- Bit preview -->
+<div id="preview"></div>
+
+<!-- Bit cards -->
+<div id="bitgrid"></div>
+
+<!-- Synthesis -->
+<div id="synth">
+  <div class="shead">
+    <div class="smeta">
+      <span style="font-size:24px">⬡</span>
+      <div><div class="stitle">SYNTHESIS ENGINE</div><div class="ssub" id="ssub">—</div></div>
+    </div>
+    <button id="cpBtn" onclick="doCopy()">COPY</button>
+  </div>
+  <div id="sbounce" class="sbouce" style="display:none">
+    <div class="bd" style="background:var(--green);width:7px;height:7px;animation:bop .9s ease-in-out 0s infinite"></div>
+    <div class="bd" style="background:var(--green);width:7px;height:7px;animation:bop .9s ease-in-out .15s infinite"></div>
+    <div class="bd" style="background:var(--green);width:7px;height:7px;animation:bop .9s ease-in-out .3s infinite"></div>
+    <div class="bd" style="background:var(--green);width:7px;height:7px;animation:bop .9s ease-in-out .45s infinite"></div>
+    <span style="color:var(--green);margin-left:12px;font-family:'JetBrains Mono',monospace;font-size:13px">Synthesizing…</span>
+  </div>
+  <div id="stext"></div>
+</div>
+
+<div class="footer">QUADBITS ENGINE · BRAINOVISION INNOVATION LAB · PARALLEL AI ARCHITECTURE</div>
+</div>
+
+<script>
+// ── Bit config ────────────────────────────────────────────────────
+var BITS = [
+  { id:'s', label:'S·BIT', name:'Structure',   sym:'⬡', color:'#22d3ee', bg:'rgba(34,211,238,.08)',  br:'rgba(34,211,238,.35)',  glow:'0 0 20px rgba(34,211,238,.6)',  role:'Content Architect', task:'Numbered sections, sub-headings, logical flow. Pure skeleton.',
+    ins:'You are a Content Architect. Generate ONLY a structural skeleton with numbered sections, sub-headings, and logical flow. No prose, no filler. Max 120 words.' },
+  { id:'t', label:'T·BIT', name:'Tone & Voice', sym:'◈', color:'#a78bfa', bg:'rgba(167,139,250,.08)', br:'rgba(167,139,250,.35)', glow:'0 0 20px rgba(167,139,250,.6)', role:'Voice Director',    task:'Tone adjectives, emotional register, reader persona, voice rules.',
+    ins:'You are a Voice Director. Output ONLY: tone adjectives, emotional register, reader persona, and voice do\'s/don\'ts as concise bullets. Max 100 words.' },
+  { id:'c', label:'C·BIT', name:'Core Content', sym:'◆', color:'#fbbf24', bg:'rgba(251,191,36,.08)',  br:'rgba(251,191,36,.35)',  glow:'0 0 20px rgba(251,191,36,.6)',  role:'Substance Engine',  task:'Key facts, data points, core arguments, essential ideas.',
+    ins:'You are a Substance Engine. Output ONLY key facts, data points, core arguments, and essential ideas as bullet points. No prose. Max 120 words.' },
+  { id:'x', label:'X·BIT', name:'Spark & Hook', sym:'✦', color:'#34d399', bg:'rgba(52,211,153,.08)',  br:'rgba(52,211,153,.35)',  glow:'0 0 20px rgba(52,211,153,.6)',  role:'Creative Igniter',  task:'3 headlines, 2 opening hooks, 1 strong CTA, 2 power phrases.',
+    ins:'You are a Creative Igniter. Output ONLY: 3 headline options, 2 opening hooks, 1 strong CTA, 2 power phrases. No explanations. Max 100 words.' },
+];
+
+// ── State ─────────────────────────────────────────────────────────
+var busy = false;
+var ticker = null;
+var t0 = 0;
+var totalTok = 0;
+var savedMs = 0;
+
+// ── Boot ──────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  var saved = localStorage.getItem('qb_key');
+  if (saved) document.getElementById('apiKey').value = saved;
+
+  // Pills
+  var pillsEl = document.getElementById('pills');
+  BITS.forEach(function(b) {
+    var el = document.createElement('span');
+    el.className = 'pill';
+    el.textContent = b.label;
+    el.style.cssText = 'border:1px solid '+b.br+';color:'+b.color+';background:'+b.bg;
+    pillsEl.appendChild(el);
+  });
+
+  // Preview cards
+  var prev = document.getElementById('preview');
+  prev.style.display = 'grid';
+  prev.style.gridTemplateColumns = 'repeat(auto-fit,minmax(200px,1fr))';
+  prev.style.gap = '12px';
+  prev.style.marginBottom = '24px';
+  BITS.forEach(function(b) {
+    var d = document.createElement('div');
+    d.className = 'pcard';
+    d.style.cssText = 'background:'+b.bg+';border:1px solid '+b.br;
+    d.innerHTML = '<div class="phead"><span style="font-size:18px;color:'+b.color+'">'+b.sym+'</span><div><div style="font-family:Orbitron,monospace;font-size:10px;color:'+b.color+';letter-spacing:1.5px">'+b.label+'</div><div style="font-size:12px;color:#94a3b8">'+b.name+'</div></div></div><div class="ptask">'+b.task+'</div>';
+    prev.appendChild(d);
+  });
+
+  // Bit cards (hidden until gen)
+  var grid = document.getElementById('bitgrid');
+  BITS.forEach(function(b) {
+    var d = document.createElement('div');
+    d.className = 'bc';
+    d.id = 'bc-'+b.id;
+    d.innerHTML =
+      '<div class="bc-top">'+
+        '<div class="bc-left">'+
+          '<span class="bc-ico" id="ico-'+b.id+'" style="color:'+b.color+'">'+b.sym+'</span>'+
+          '<div><div class="bc-lbl" style="color:'+b.color+'">'+b.label+'</div><div class="bc-role">'+b.role+'</div></div>'+
+        '</div>'+
+        '<div class="bc-right">'+
+          '<div class="bc-dot" id="dot-'+b.id+'" style="background:#334155"></div>'+
+          '<span class="bc-st" id="st-'+b.id+'" style="color:#334155">STANDBY</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="bc-body" id="body-'+b.id+'"><span style="color:#334155;font-style:italic">Awaiting dispatch…</span></div>'+
+      '<div class="bc-tok" id="tok-'+b.id+'"></div>';
+    grid.appendChild(d);
+  });
+});
+
+// ── Helpers ───────────────────────────────────────────────────────
+function saveKey() {
+  var k = document.getElementById('apiKey').value.trim();
+  if (!k) { showErr('Please paste your Anthropic API key first.'); return; }
+  localStorage.setItem('qb_key', k);
+  var btn = document.getElementById('saveBtn');
+  btn.textContent = '✓ SAVED'; btn.style.color = '#34d399';
+  setTimeout(function(){ btn.textContent = 'SAVE'; btn.style.color = ''; }, 1800);
+}
+
+function showErr(msg) {
+  var b = document.getElementById('errbox');
+  b.textContent = '⚠ ' + msg;
+  b.style.display = 'block';
+  setTimeout(function(){ b.style.display = 'none'; }, 8000);
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updM() {
+  var el = Date.now() - t0;
+  document.getElementById('mEl').textContent = el > 0 ? (el/1000).toFixed(1)+'s' : '—';
+  document.getElementById('mSv').textContent = savedMs > 0 ? '~'+Math.round(savedMs/1000)+'s' : '—';
+  document.getElementById('mTk').textContent = totalTok > 0 ? totalTok : '—';
+  var eff = busy ? 0 : (savedMs > 0 ? Math.round(savedMs/(el+savedMs)*100) : 0);
+  document.getElementById('mEf').textContent = eff > 0 ? eff+'%' : '—';
+}
+
+function setCard(b, status, text, tokens) {
+  var card = document.getElementById('bc-'+b.id);
+  var dot  = document.getElementById('dot-'+b.id);
+  var st   = document.getElementById('st-'+b.id);
+  var ico  = document.getElementById('ico-'+b.id);
+  var body = document.getElementById('body-'+b.id);
+  var tok  = document.getElementById('tok-'+b.id);
+
+  // Remove old scanbar
+  var old = card.querySelector('.scanbar');
+  if (old) old.remove();
+
+  if (status === 'running') {
+    card.style.cssText = 'background:'+b.bg+';border:1px solid '+b.br+';box-shadow:'+b.glow;
+    dot.style.background = b.color; dot.style.boxShadow = '0 0 8px '+b.color;
+    dot.className = 'bc-dot pulsing';
+    st.textContent = 'PROCESSING'; st.style.color = b.color;
+    ico.style.filter = 'drop-shadow(0 0 6px '+b.color+')';
+    var sl = document.createElement('div');
+    sl.className = 'scanbar';
+    sl.style.background = 'linear-gradient(90deg,transparent,'+b.color+',transparent)';
+    card.prepend(sl);
+    body.innerHTML = '<div class="bdots">'+
+      '<div class="bd" style="background:'+b.color+';animation:bop .8s ease-in-out 0s infinite"></div>'+
+      '<div class="bd" style="background:'+b.color+';animation:bop .8s ease-in-out .15s infinite"></div>'+
+      '<div class="bd" style="background:'+b.color+';animation:bop .8s ease-in-out .3s infinite"></div>'+
+      '<span style="color:'+b.color+';margin-left:8px">Generating…</span></div>';
+  } else if (status === 'done') {
+    card.style.cssText = 'background:'+b.bg+';border:1px solid '+b.br+';box-shadow:0 0 14px rgba(52,211,153,.12)';
+    dot.style.background = '#34d399'; dot.style.boxShadow = 'none'; dot.className = 'bc-dot';
+    st.textContent = 'COMPLETE'; st.style.color = '#34d399';
+    ico.style.filter = 'none';
+    body.innerHTML = '<pre style="color:#e2e8f0">'+esc(text)+'</pre>';
+    if (tokens) tok.textContent = tokens+' TOKENS';
+  } else if (status === 'error') {
+    card.style.cssText = 'background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.3)';
+    dot.style.background = '#f87171'; dot.style.boxShadow = 'none'; dot.className = 'bc-dot';
+    st.textContent = 'ERROR'; st.style.color = '#f87171';
+    ico.style.filter = 'none';
+    body.innerHTML = '<pre style="color:#f87171">'+esc(text)+'</pre>';
+  } else {
+    card.style.cssText = '';
+    dot.style.background = '#334155'; dot.style.boxShadow = 'none'; dot.className = 'bc-dot';
+    st.textContent = 'STANDBY'; st.style.color = '#334155';
+    ico.style.filter = 'none';
+    body.innerHTML = '<span style="color:#334155;font-style:italic">Awaiting dispatch…</span>';
+    tok.textContent = '';
+  }
+}
+
+// ── API ───────────────────────────────────────────────────────────
+async function callAPI(instruction, brief) {
+  var key = document.getElementById('apiKey').value.trim();
+  if (!key) throw new Error('No API key. Enter your Anthropic key and click SAVE.');
+
+  var res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: instruction + '\n\nBRIEF:\n' + brief }]
+    })
+  });
+
+  var data = await res.json();
+  if (!res.ok) throw new Error(data && data.error && data.error.message ? data.error.message : 'API error ' + res.status);
+  if (!data.content || !data.content.length) throw new Error('Empty response from API');
+  var text = data.content.map(function(c){ return c.text || ''; }).join('').trim();
+  var tokens = (data.usage ? (data.usage.input_tokens||0) + (data.usage.output_tokens||0) : 0);
+  return { text: text, tokens: tokens };
+}
+
+// ── Main ──────────────────────────────────────────────────────────
+async function runGen() {
+  if (busy) return;
+
+  var topic = document.getElementById('topic').value.trim();
+  var ctype = document.getElementById('ctype').value;
+  var aud   = document.getElementById('aud').value.trim();
+  var key   = document.getElementById('apiKey').value.trim();
+
+  document.getElementById('errbox').style.display = 'none';
+
+  if (!key)   { showErr('Enter your Anthropic API key above and click SAVE.'); return; }
+  if (!topic) { showErr('Please enter a topic or brief.'); return; }
+
+  // UI: enter busy state
+  busy = true;
+  totalTok = 0; savedMs = 0;
+  document.getElementById('goBtn').disabled = true;
+  document.getElementById('goBtn').textContent = '⬡ DISPATCHING BITS…';
+  document.getElementById('rstBtn').style.display = '';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('bitgrid').style.display = 'grid';
+  document.getElementById('metrics').style.display = 'grid';
+
+  // Reset synth
+  document.getElementById('synth').style.display = 'none';
+  document.getElementById('stext').textContent = '';
+  document.getElementById('ssub').textContent = 'Fusing 4 bit-streams…';
+  document.getElementById('cpBtn').style.display = 'none';
+  document.getElementById('sbounce').style.display = 'none';
+
+  // Reset cards
+  BITS.forEach(function(b){ setCard(b, 'idle', '', 0); });
+
+  t0 = Date.now();
+  ticker = setInterval(updM, 250);
+
+  // Set all running
+  BITS.forEach(function(b){ setCard(b, 'running', '', 0); });
+
+  var brief = 'Content type: ' + ctype + '\nTopic: ' + topic + (aud ? '\nAudience: ' + aud : '');
+
+  // Parallel bit calls
+  var promises = BITS.map(function(b) {
+    return callAPI(b.ins, brief)
+      .then(function(r){ return { id:b.id, ok:true, text:r.text, tokens:r.tokens }; })
+      .catch(function(e){ return { id:b.id, ok:false, err:e.message }; });
+  });
+
+  var results = await Promise.all(promises);
+
+  var textMap = {};
+  results.forEach(function(r) {
+    var b = BITS.find(function(x){ return x.id === r.id; });
+    if (r.ok) {
+      textMap[r.id] = r.text;
+      totalTok += r.tokens;
+      setCard(b, 'done', r.text, r.tokens);
+    } else {
+      setCard(b, 'error', r.err, 0);
+    }
+  });
+
+  var parallelMs = Date.now() - t0;
+  savedMs = Math.max(0, BITS.length * 4500 - parallelMs);
+  updM();
+
+  var anyOk = results.some(function(r){ return r.ok; });
+  if (!anyOk) {
+    clearInterval(ticker);
+    busy = false;
+    document.getElementById('goBtn').disabled = false;
+    document.getElementById('goBtn').textContent = '▶ DISPATCH QUADBITS';
+    showErr('All bits failed. Double-check your API key is correct.');
+    return;
+  }
+
+  // Synthesis
+  document.getElementById('goBtn').textContent = '◆ SYNTHESIZING…';
+  var synth = document.getElementById('synth');
+  synth.style.display = 'block';
+  synth.style.cssText = 'display:block;background:rgba(52,211,153,.05);border:1px solid rgba(52,211,153,.18);border-radius:16px;padding:24px;margin-top:4px';
+  document.getElementById('sbounce').style.display = 'flex';
+  document.getElementById('ssub').textContent = 'Fusing 4 bit-streams into final content…';
+  synth.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  var si = 'You are a master content synthesizer. Fuse the four intelligence streams below into one polished, publication-ready ' + ctype + '. Apply the defined tone, follow the structure as your outline, weave in the substance, and embed hooks and CTA naturally. Output the final ' + ctype + ' only — no preamble, no section labels.';
+  var sb = 'TOPIC: ' + topic + '\nAUDIENCE: ' + (aud||'general') +
+    '\n\n[S·BIT — Structure]\n' + (textMap.s||'(unavailable)') +
+    '\n\n[T·BIT — Tone]\n'      + (textMap.t||'(unavailable)') +
+    '\n\n[C·BIT — Content]\n'   + (textMap.c||'(unavailable)') +
+    '\n\n[X·BIT — Spark]\n'     + (textMap.x||'(unavailable)');
+
+  try {
+    var sr = await callAPI(si, sb);
+    totalTok += sr.tokens;
+    clearInterval(ticker);
+    savedMs = Math.max(0, BITS.length * 4500 - (Date.now() - t0));
+    updM();
+
+    document.getElementById('sbounce').style.display = 'none';
+    document.getElementById('ssub').textContent = 'Final ' + ctype + ' · ' + sr.tokens + ' tokens';
+    document.getElementById('stext').textContent = sr.text;
+    document.getElementById('cpBtn').style.display = '';
+    synth.style.borderColor = 'rgba(52,211,153,.38)';
+    synth.style.boxShadow = '0 0 30px rgba(52,211,153,.08)';
+  } catch(e) {
+    clearInterval(ticker);
+    document.getElementById('sbounce').style.display = 'none';
+    document.getElementById('ssub').textContent = 'Synthesis failed';
+    document.getElementById('stext').textContent = 'Error: ' + e.message;
+    synth.style.borderColor = 'rgba(248,113,113,.35)';
+  }
+
+  busy = false;
+  document.getElementById('goBtn').disabled = false;
+  document.getElementById('goBtn').textContent = '▶ DISPATCH QUADBITS';
+}
+
+function doReset() {
+  clearInterval(ticker);
+  busy = false; totalTok = 0; savedMs = 0;
+  BITS.forEach(function(b){ setCard(b, 'idle', '', 0); });
+  document.getElementById('synth').style.display = 'none';
+  document.getElementById('bitgrid').style.display = 'none';
+  document.getElementById('preview').style.display = 'grid';
+  document.getElementById('metrics').style.display = 'none';
+  document.getElementById('rstBtn').style.display = 'none';
+  document.getElementById('goBtn').disabled = false;
+  document.getElementById('goBtn').textContent = '▶ DISPATCH QUADBITS';
+  document.getElementById('errbox').style.display = 'none';
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function doCopy() {
+  var text = document.getElementById('stext').textContent || '';
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.getElementById('cpBtn');
+    btn.textContent = '✓ COPIED'; btn.style.color = '#34d399'; btn.style.borderColor = 'rgba(52,211,153,.5)'; btn.style.background = 'rgba(52,211,153,.15)';
+    setTimeout(function(){ btn.textContent = 'COPY'; btn.style.color = '#94a3b8'; btn.style.borderColor = 'rgba(255,255,255,.12)'; btn.style.background = 'rgba(255,255,255,.05)'; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
