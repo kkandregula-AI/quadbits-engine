@@ -189,7 +189,7 @@ textarea.finp{resize:none;line-height:1.65}
 
 <!-- API Key -->
 <div class="apibar">
-  <label>API KEY</label>
+  <label>ANTHROPIC API KEY</label>
   <input type="password" id="apiKey" placeholder="sk-ant-api03-…  saved locally, never transmitted elsewhere"/>
   <button class="btn-save" onclick="saveKey()">SAVE</button>
 </div>
@@ -247,6 +247,15 @@ textarea.finp{resize:none;line-height:1.65}
     <p>Watch all 4 AI streams fire in parallel, then fuse into a polished Blog Post — instantly, with no API call. Feel the engine before you run it yourself.</p>
   </div>
   <button class="btn-demo" id="demoBtn" onclick="runDemo()">⬡ TRY DEMO</button>
+</div>
+
+<!-- Post-demo instruction -->
+<div style="background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.18);border-radius:12px;padding:14px 20px;margin-bottom:22px;text-align:center;animation:fadeUp .5s ease">
+  <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text2);line-height:1.8">
+    To generate the <span style="color:var(--gold);font-weight:600">Synthesis Engine output for your own topic</span> —
+    enter your <span style="color:var(--gold)">Anthropic API Key</span> in the field at the top of the page,
+    fill in your topic below, and hit <span style="color:var(--gold)">▶ DISPATCH QUADBITS</span>
+  </div>
 </div>
 
 <!-- Form -->
