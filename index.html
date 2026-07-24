@@ -268,6 +268,7 @@ textarea.finp{resize:none;line-height:1.65}
         <option>Email Campaign</option><option>Ad Copy</option>
         <option>Product Description</option><option>Press Release</option>
         <option>LinkedIn Article</option><option>Landing Page Copy</option>
+        <option>Q&amp;A</option>
       </select>
     </div>
     <div>
@@ -362,18 +363,77 @@ textarea.finp{resize:none;line-height:1.65}
 /* ── Bit config ───────────────────────────────────── */
 var BITS=[
   {id:'s',label:'S·AGENT',name:'Structure Agent',  sym:'⬡',color:'#38bdf8',bg:'rgba(56,189,248,.08)',  br:'rgba(56,189,248,.3)', glow:'0 0 22px rgba(56,189,248,.55)',  role:'Content Architect',
-   task:'Numbered sections, sub-headings, logical flow. Pure skeleton.',
-   ins:'You are a Content Architect Agent. Respond with ONLY a structural skeleton using numbered sections and sub-headings. No prose, no filler. Max 120 words.'},
+   task:'Numbered sections, sub-headings, logical flow. Pure skeleton.'},
   {id:'t',label:'T·AGENT',name:'Tone Agent',       sym:'◈',color:'#a78bfa',bg:'rgba(167,139,250,.08)',br:'rgba(167,139,250,.3)',glow:'0 0 22px rgba(167,139,250,.55)',role:'Voice Director',
-   task:'Tone, emotional register, reader persona, brand voice rules.',
-   ins:'You are a Tone Agent. Respond with ONLY: tone adjectives, emotional register, reader persona, voice do\'s/don\'ts as concise bullets. Max 100 words.'},
+   task:'Tone, emotional register, reader persona, brand voice rules.'},
   {id:'c',label:'C·AGENT',name:'Content Agent',    sym:'◆',color:'#d4a853',bg:'rgba(212,168,83,.08)',  br:'rgba(212,168,83,.3)', glow:'0 0 22px rgba(212,168,83,.55)',  role:'Substance Engine',
-   task:'Key facts, data points, core arguments, essential ideas.',
-   ins:'You are a Content Agent. Respond with ONLY key facts, data points, arguments as bullet points. No prose. Max 120 words.'},
+   task:'Key facts, data points, core arguments, essential ideas.'},
   {id:'x',label:'X·AGENT',name:'Spark Agent',      sym:'✦',color:'#34d399',bg:'rgba(52,211,153,.08)',  br:'rgba(52,211,153,.3)', glow:'0 0 22px rgba(52,211,153,.55)',  role:'Creative Igniter',
-   task:'3 headlines, 2 opening hooks, 1 strong CTA, 2 power phrases.',
-   ins:'You are a Spark Agent. Respond with ONLY: 3 headline options, 2 opening hooks, 1 strong CTA, 2 power phrases. Max 100 words.'},
+   task:'Headlines, opening hooks, CTA, power phrases.'},
 ];
+
+/* ── Content-type specific agent instructions ─────── */
+var CT_INS={
+  'Blog Post':{
+    s:'You are a Content Architect. Generate ONLY a blog post skeleton: intro, 3-5 numbered sections with sub-headings, conclusion. No prose. Max 120 words.',
+    t:'You are a Tone Agent for a blog post. Output ONLY: tone (e.g. authoritative, conversational), emotional register, reader persona, 3 voice do\'s and don\'ts. Max 100 words.',
+    c:'You are a Content Agent for a blog post. Output ONLY key facts, statistics, arguments and supporting points as bullet points. Max 120 words.',
+    x:'You are a Spark Agent for a blog post. Output ONLY: 3 headline options, 2 opening sentences/hooks, 1 closing CTA, 2 power phrases. Max 100 words.'
+  },
+  'Social Media Post':{
+    s:'You are a Content Architect for a social media post. Output ONLY a short content plan: hook line, 2-3 key points, CTA, hashtag strategy. No prose. Max 80 words.',
+    t:'You are a Tone Agent for social media. Output ONLY: platform-specific tone (punchy, relatable, viral-friendly), emotional trigger, ideal scrolling persona, 3 voice rules. Max 80 words.',
+    c:'You are a Content Agent for a social media post. Output ONLY 3-5 crisp facts or bold statements that work on social. Each under 15 words. Max 80 words.',
+    x:'You are a Spark Agent for social media. Output ONLY: 3 scroll-stopping opening lines, 1 strong CTA under 10 words, 2 viral power phrases, 5 relevant hashtags. Max 100 words.'
+  },
+  'Email Campaign':{
+    s:'You are a Content Architect for an email campaign. Output ONLY: subject line placeholder, preheader, email sections (opener, problem, solution, proof, CTA, PS). Max 100 words.',
+    t:'You are a Tone Agent for an email campaign. Output ONLY: tone (e.g. warm, urgent, personal), reader relationship stage, 3 voice rules for email. Max 80 words.',
+    c:'You are a Content Agent for an email campaign. Output ONLY key value propositions, pain points addressed, proof points/stats, and objection responses as bullets. Max 120 words.',
+    x:'You are a Spark Agent for an email campaign. Output ONLY: 3 subject line options, 2 opening sentences, 1 CTA button text, 2 PS lines. Max 100 words.'
+  },
+  'Ad Copy':{
+    s:'You are a Content Architect for ad copy. Output ONLY: headline slot, subheadline slot, 2-3 benefit bullets, CTA slot, trust signal slot. Max 60 words.',
+    t:'You are a Tone Agent for ad copy. Output ONLY: tone (direct, urgent, benefit-driven), buyer psychology trigger, target persona, 3 strict voice rules. Max 80 words.',
+    c:'You are a Content Agent for ad copy. Output ONLY: top 3 product benefits, 2 key differentiators, 1 proof stat, main pain point solved. Ultra concise bullets. Max 80 words.',
+    x:'You are a Spark Agent for ad copy. Output ONLY: 3 headline options (under 8 words each), 2 subheadlines, 1 power CTA, 2 urgency phrases. Max 80 words.'
+  },
+  'Product Description':{
+    s:'You are a Content Architect for a product description. Output ONLY: hero statement slot, feature sections (3-4), benefits block, use-case section, CTA. Max 100 words.',
+    t:'You are a Tone Agent for a product description. Output ONLY: tone (aspirational, practical, trust-building), buyer stage, 3 voice rules for product copy. Max 80 words.',
+    c:'You are a Content Agent for a product description. Output ONLY: top 4 features, top 3 benefits, 1 key spec or proof point, ideal use cases. Bullets only. Max 100 words.',
+    x:'You are a Spark Agent for a product description. Output ONLY: 3 hero statement options, 2 feature-benefit lines, 1 strong CTA, 2 trust phrases. Max 80 words.'
+  },
+  'Press Release':{
+    s:'You are a Content Architect for a press release. Output ONLY: headline, dateline, lead paragraph slots, quote block, boilerplate, media contact section. Max 100 words.',
+    t:'You are a Tone Agent for a press release. Output ONLY: tone (formal, newsworthy, factual), journalist persona, 3 AP-style voice rules. Max 80 words.',
+    c:'You are a Content Agent for a press release. Output ONLY: the 5 Ws (who, what, when, where, why), key announcement facts, supporting data, company proof points. Bullets. Max 120 words.',
+    x:'You are a Spark Agent for a press release. Output ONLY: 3 headline options (active voice), 2 strong lead sentence options, 1 executive quote draft, 1 key takeaway line. Max 100 words.'
+  },
+  'LinkedIn Article':{
+    s:'You are a Content Architect for a LinkedIn article. Output ONLY: hook opener slot, 3-5 section headings with sub-points, insight/data section, personal lesson, CTA. Max 120 words.',
+    t:'You are a Tone Agent for a LinkedIn article. Output ONLY: tone (thought-leader, personal, data-backed), LinkedIn reader persona, 3 platform-specific voice rules. Max 80 words.',
+    c:'You are a Content Agent for a LinkedIn article. Output ONLY: 4-5 strong insight points, relevant industry stats, contrarian angle, actionable takeaways. Bullets. Max 120 words.',
+    x:'You are a Spark Agent for a LinkedIn article. Output ONLY: 3 scroll-stopping opening lines, 1 strong closing CTA, 2 shareable insight phrases, 1 title option. Max 100 words.'
+  },
+  'Q&A':{
+    s:'You are a Content Architect for a Q&A article. Output ONLY: a list of 6-8 sharp, audience-relevant questions organised into logical thematic groups. No answers, no prose. Max 120 words.',
+    t:'You are a Tone Agent for a Q&A article. Output ONLY: tone (clear, expert, approachable), reader intent (seeking answers, evaluating options), 3 voice rules for Q&A copy. Max 80 words.',
+    c:'You are a Content Agent for a Q&A article. Output ONLY: concise factual answer points, supporting data, real examples and counter-arguments mapped to each question theme. Bullets only. Max 120 words.',
+    x:'You are a Spark Agent for a Q&A article. Output ONLY: 3 title options (curiosity-driven), 2 compelling intro lines, 1 closing CTA that encourages further engagement, 2 power phrases. Max 100 words.'
+  },
+  'Landing Page Copy':{
+    s:'You are a Content Architect for landing page copy. Output ONLY: hero section, problem section, solution section, features (3), social proof section, FAQ (2), CTA section. Max 120 words.',
+    t:'You are a Tone Agent for landing page copy. Output ONLY: tone (conversion-focused, benefit-driven, urgent), visitor intent stage, 3 strict copywriting voice rules. Max 80 words.',
+    c:'You are a Content Agent for landing page copy. Output ONLY: primary value proposition, top 3 pain points solved, key features with benefits, 2 proof stats, objections addressed. Bullets. Max 120 words.',
+    x:'You are a Spark Agent for landing page copy. Output ONLY: 3 hero headline options, 2 subheadlines, 3 CTA button text options, 2 urgency/trust phrases. Max 100 words.'
+  }
+};
+
+function getIns(id,ctype){
+  var ct=CT_INS[ctype]||CT_INS['Blog Post'];
+  return ct[id];
+}
 
 /* ── Demo sample content ──────────────────────────── */
 var DEMO={
@@ -782,7 +842,7 @@ async function runGen(){
 
   var brief='Content type: '+ctype+'\nTopic: '+topic+(aud?'\nAudience: '+aud:'');
   var promises=BITS.map(function(b){
-    return callAPI(b.ins,brief)
+    return callAPI(getIns(b.id,ctype), brief)
       .then(function(r){return{id:b.id,ok:true,text:r.text,tokens:r.tokens,model:r.model};})
       .catch(function(e){return{id:b.id,ok:false,err:e.message};});
   });
